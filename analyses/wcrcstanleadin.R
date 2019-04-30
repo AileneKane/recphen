@@ -20,7 +20,7 @@ options(mc.cores = parallel::detectCores())
 
 ## (1) slim down the data to correct response and no NAs ...
 
-source("analyses/recanalysis/wcrcdataplease.R")
+source("analyses/wcrcdataplease.R")
 dim(fishsum)
 dim(fishsum.yr)
 ##################################
@@ -94,25 +94,25 @@ str(datalist.coho)
 
 
 #First try fitting the model as a gam, across all areas
-for(y in 1987:1993) {
-  if(y==1988){next}
-  yr<-fishsum.yr[fishsum.yr$year==y,]
-  #fa<-unique(yr$area)
-  #for (f in 1:length(unique(fa)))
-  #fayr<-yr[yr$area==fa[f],]
-  w=as.integer(yr$week)
-  c = yr$chin
-  effort = yr$anglers
-  plot(w,c, pch=21,bg="gray",xlab = "Week",
-       ylab = "Expected recreational catch", main = paste("Year: ",y))
-  g = gam(log(c+1) ~ s(w) + offset(log(effort)))
-  lines(w,exp(g$fitted.values),lwd=3)
-  gam.check(g)
-  plot.gam(g)
-}
-
-#Now, try to fit in stan
-dim(fishsum)
-head(fishsum)
-table(fishsum$area[fishsum$chin>0],fishsum$year[fishsum$chin>0])
-log(c+1)
+# for(y in 1987:1993) {
+#   if(y==1988){next}
+#   yr<-fishsum.yr[fishsum.yr$year==y,]
+#   #fa<-unique(yr$area)
+#   #for (f in 1:length(unique(fa)))
+#   #fayr<-yr[yr$area==fa[f],]
+#   w=as.integer(yr$week)
+#   c = yr$chin
+#   effort = yr$anglers
+#   plot(w,c, pch=21,bg="gray",xlab = "Week",
+#        ylab = "Expected recreational catch", main = paste("Year: ",y))
+#   g = gam(log(c+1) ~ s(w) + offset(log(effort)))
+#   lines(w,exp(g$fitted.values),lwd=3)
+#   gam.check(g)
+#   plot.gam(g)
+# }
+# 
+# #Now, try to fit in stan
+# dim(fishsum)
+# head(fishsum)
+# table(fishsum$area[fishsum$chin>0],fishsum$year[fishsum$chin>0])
+# log(c+1)

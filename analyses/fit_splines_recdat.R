@@ -11,8 +11,6 @@ options(stringsAsFactors = FALSE)
 
 # Set working directory: 
 setwd("~/Documents/GitHub/recphen")
-#or from laptop:
-#setwd("/Users/aileneettinger/Documents/GitHub/fishphen")
 
 # Load libraries
 
@@ -42,7 +40,7 @@ spline_degree <- 3
 #determine where knots are and how many...currently setting knots every 5 weeks; this yields 11 knots plus the two boundary knots
 B <- t(bs(X, knots=seq(min(X),max(X),5), degree=spline_degree, intercept = TRUE)) # creating the B-splines
 num_data <- length(X); num_basis <- nrow(B)
-Y <- log(dat$coho+1)
+Y <- log(dat$chin+1)
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 sm<-stan_model("analyses/recmod.stan")
@@ -62,7 +60,8 @@ plot(X,Y, col="azure4", xlab="week", ylab="log(chincatch)",bty="l", main=paste(y
 polygon(c(rev(X), X), c(rev(Y_hat_lb), Y_hat_ub), col = 'grey80', border = NA)
 lines(X, Y_hat_med, col="Red", lw=2)
 }
-#NEed to add to recmod.stan:
+#Need to add to recmod.stan:
 #1. offset of effort
 #2. random effect of year
 #3. random effect of site
+#4. account for regulations
