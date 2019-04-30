@@ -87,8 +87,8 @@ dim(fishsum.yr)
 
     
 ## AT THE END ...
-str(datalist.chin)
-str(datalist.coho)
+#str(datalist.chin)
+#str(datalist.coho)
 
 #print("Unique forcing types are ...")
 

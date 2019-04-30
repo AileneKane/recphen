@@ -1,0 +1,10 @@
+Questions for Ole about the phenology model for rec fishing data
+1) I think i must be coding the offset wrong, as it doesn't seem to affect estimates. What do i need to do?
+
+2) How should we ultimately choose number of knots and their location?
+
+3) My planned next steps:
+  a) add random effect of year
+  b) add random effect of site (fishing area)
+  c) add later years of catch/effort data and regulation data
+  d) add presence/absence (i.e. detection) component of the model

@@ -4,10 +4,8 @@
 #https://mc-stan.org/users/documentation/case-studies/splines_in_stan.html
 
 #housekeeping
-
 rm(list=ls()) 
 options(stringsAsFactors = FALSE)
-
 
 # Set working directory: 
 setwd("~/Documents/GitHub/recphen")
@@ -16,37 +14,49 @@ setwd("~/Documents/GitHub/recphen")
 
 library("splines")
 library("rstan")
-library(mgcv)
+#library(mgcv)
+
+#prepare for stan
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
+
+
 #Read in WA rec data (just the early years for now)
 d<-read.csv("analyses/output/wacrdat_1984_1993.csv", header=TRUE)#for now just use the old data
 
+#prep the data for the model
 source("analyses/wcrcstanleadin.R")
 
-#try for just one year
+#try one year at a time for now
 years<-unique(fishsum.yr$year)
+
 quartz(height=8, width=20)
 par(mfrow=c(2,3))
+
+#fit a separate model for each year (for all sites in puget sound)
 for (y in 1:length(years)){
 dat=fishsum.yr[fishsum.yr$year==years[y],]
 X <- as.integer(dat$week) #weeks
 #num_knots <- 13 #11 interior knots and 2 boundary knots
 spline_degree <- 3
 #num_basis <- num_knots + spline_degree - 1
-#this helps avoid overfitting
 
-#could add a smoothing prior: https://mc-stan.org/users/documentation/case-studies/splines_in_stan.html
+#could add a smoothing prior (to help with overfitting): https://mc-stan.org/users/documentation/case-studies/splines_in_stan.html 
 
 #Currently choosing knot location and fitting the B-spline before fitting the stan model
-#determine where knots are and how many...currently setting knots every 5 weeks; this yields 11 knots plus the two boundary knots
+#Setting knots every 5 weeks- why? I don't know!; this yields 11 knots plus the two boundary knots
+
 B <- t(bs(X, knots=seq(min(X),max(X),5), degree=spline_degree, intercept = TRUE)) # creating the B-splines
 num_data <- length(X); num_basis <- nrow(B)
 Y <- log(dat$chin+1)
-rstan_options(auto_write = TRUE)
-options(mc.cores = parallel::detectCores())
+OFFSET<-log(dat$anglers)
+
+
 sm<-stan_model("analyses/recmod.stan")
 
 fit<-sampling(sm,iter=500,control = list(adapt_delta=0.95))
-plot(fit)
+
+#plot(fit)
 ff<-extract(fit)
 Y_hat_med <- array(NA, length(Y))
 Y_hat_ub <- array(NA, length(Y))
@@ -61,7 +71,7 @@ polygon(c(rev(X), X), c(rev(Y_hat_lb), Y_hat_ub), col = 'grey80', border = NA)
 lines(X, Y_hat_med, col="Red", lw=2)
 }
 #Need to add to recmod.stan:
-#1. offset of effort
+#1. Fix offset of effort- does not seem to be working...
 #2. random effect of year
 #3. random effect of site
 #4. account for regulations
