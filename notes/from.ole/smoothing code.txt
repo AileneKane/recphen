@@ -1,0 +1,101 @@
+//  OK.  This is a little snipet of code for smoothing things.
+// You have to make some objects to read into the data file.  
+
+// The smoothing projection is called a predictive process model.  
+// This versions is currently zero centered and has a Gaussian covariance.  You could add 
+
+
+PRE-STAN STUFF
+# knot.loc is a vector of the locations of knots, 
+# pred.loc is a vector of prediction locations
+
+
+# Matrices of distance among knots and between knots and prediction locations.
+d_knot_knot <- as.matrix(dist(knot.loc,upper=T)) 
+d_pred_knot <- as.matrix(dist(c(pred.loc,knot.loc),upper=T))
+d_pred_knot <- d_pred_knot[(N_pred_loc+1):nrow(d_pred_knot),1:N_pred_loc]
+
+d_knot_knot2 <- d_knot_knot^2 \\ square matrix of the distance among knots.
+d_pred_knot2 <- d_pred_knot^2 \\  matrix of the distance for the knot locations (rows) to the predicted locations (columns)
+
+
+
+///////////////// STAN 
+
+data{
+   // indices and matrices to make ocean distribution smooth (predictive process model)
+   int<lower=0> N_knot      ;  // user defined number of knots 
+   int<lower=0> N_pred_loc  ;	// user defined number of prediction locations (or weeks in your case)
+    matrix[N_knot,N_knot] d_knot_knot2  ;    // square matrix of the distance among knots.
+   matrix[N_knot,N_pred_loc] d_pred_knot2  ; // matrix of the distance between the knot locations (rows) to the predicted locations (columns)
+}
+
+transformed data{
+  vector[N_knot] zero_vec_pred_loc ;  // vector of zeros for centering the model at 0.
+
+  zero_vec_pred_loc = rep_vector(0, N_knot);
+
+}
+
+parameters{
+  /// Ocean distribution smoothing parameters
+      real<lower = 0> theta_space  ; /// spatial correlation parameter
+      real<lower = 0> phi_space    ; /// spatial sd parameter
+}
+
+
+
+
+transformed parameters{
+    // Distribution in the ocean coefficients (Origin-location offsets)
+        vector[N_loc] origin_sea_int[N_season,N_origin] ;
+        vector[N_pred_loc] w_temp ;
+        // local variable for inverse of knot matrix
+        matrix<lower=0>[N_knot,N_knot] C_knot ;
+        matrix<lower=0>[N_pred_loc,N_knot] c_pred_trans ;
+        matrix[N_knot,N_knot] C_knot_inverse ;
+        cholesky_factor_cov[N_knot] L_knot[N_origin];
+
+
+      //phi_space_origin[1] = phi_space ;
+      for(i in 1:N_origin){
+        phi_space_origin[i] = phi_space ;
+    }
+        
+    for(i in 1:N_origin){ 
+          //// Spatial smoothing calculations
+        C_knot         = exp(-d_knot_knot2 * inv(pow(theta_space,2))) *pow(phi_space_origin[i],2) ;
+        	//print("C_knot",C_knot);
+        C_knot_inverse = inverse(C_knot) ;
+        	//print("C_knot_inv",C_knot_inverse);
+        c_pred_trans   = exp(-t_d_pred_knot2 * inv(pow(theta_space,2))) * pow(phi_space_origin[i],2) ;
+    	    //print("c_pred_trans",c_pred_trans) ;
+        L_knot[i]         = cholesky_decompose(C_knot) ;
+ 	       //print("w_star",w_star[1,1])
+    
+        for(j in 1:N_season){
+          // This is the smoothing projection
+          w_temp  =   c_pred_trans * C_knot_inverse  * w_star[j,i] ;
+          for(k in 1:N_pred_loc){
+              origin_sea_int[j,i,knot_idex[k]] = w_temp[k] ;
+          }
+         }
+    }
+}
+
+
+
+model{
+
+ // Smoothing parameters priors
+    //phi_space_mean 
+    phi_space ~ gamma(phi_space_prior[1],phi_space_prior[2]) ;  
+    theta_space ~ gamma(theta_space_prior[1],theta_space_prior[2]) ; 
+
+
+    for(i in 1:N_origin){
+      for(j in 1:N_season){
+        w_star[j,i] ~ multi_normal_cholesky(zero_vec_pred_loc,L_knot[i]) ;
+      }
+    }
+}
