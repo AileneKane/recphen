@@ -1,21 +1,13 @@
 #housekeeping
 
-rm(list=ls()) 
-options(stringsAsFactors = FALSE)
+#rm(list=ls()) 
+#options(stringsAsFactors = FALSE)
 
 
 # Set working directory: 
-setwd("~/Documents/GitHub/fishphen")
-#or from laptop:
-#setwd("/Users/aileneettinger/Documents/GitHub/fishphen")
+#setwd("~/Documents/GitHub/recphen")
 
 # Load libraries
-
-# libraries needed for the leadin code
-#library(plyr)
-#library(dplyr)
-library(rstan)
-library(mgcv)
 
 source("analyses/source/savestan.R") # Dan Flynn code
 source("analyses/source/stan_utility.R") # From Mike Betancourt
@@ -26,9 +18,7 @@ options(mc.cores = parallel::detectCores())
 ## First steps to cleaning: Get the data, subset down to exact data columns that we want 
 ## Be sure to keep an eye on this part of the code and the files it sources, they will need updating!
 
-## (1) Get the data and slim down to correct response and no NAs ...
-
-d<-read.csv("analyses/output/wacrdat_1984_1993.csv", header=TRUE)#for now just use the old data
+## (1) slim down the data to correct response and no NAs ...
 
 source("analyses/recanalysis/wcrcdataplease.R")
 dim(fishsum)
