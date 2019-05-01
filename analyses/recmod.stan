@@ -3,9 +3,9 @@
 data { 
   int num_data; 
   int num_basis; 
-  real OFFSET;//effort= //log(number of anglers)
   vector[num_data] Y; //log(number of fish caught)
   vector[num_data] X; //week
+  //vector[num_data] OFFSET ; //effort= number of anglers
   matrix[num_basis, num_data] B; 
 } 
  
@@ -18,14 +18,15 @@ parameters {
  
 transformed parameters { 
   row_vector[num_basis] a; 
-  vector[num_data] Y_hat; 
+  vector[num_data] Y_hat_log; 
   a = a_raw*tau;  
-  Y_hat = a0*X + to_vector(a*B) + OFFSET;
+  Y_hat_log = a0 + to_vector(a*B) ;
 } 
  
 model { 
   a_raw ~ normal(0, 1); 
   tau ~ cauchy(0, 1); 
   sigma ~ cauchy(0, 1); 
-  Y ~ normal(Y_hat, sigma); 
+  Y ~ normal(Y_hat_log, sigma); 
 } 
+

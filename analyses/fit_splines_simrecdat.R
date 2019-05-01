@@ -14,7 +14,7 @@ Y_true <- as.vector(a0*X + a%*%B+ c) # generating the output
 Y <- Y_true + rnorm(length(X),0,1) # adding noise
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
-sm<-stan_model("notes/from.splines_in_stan/fit_basis.stan")
+sm<-stan_model("analyses/recmod.stan")
 fit<-sampling(sm,iter=500,control = list(adapt_delta=0.95))
 plot(fit)
 ff<-extract(fit)

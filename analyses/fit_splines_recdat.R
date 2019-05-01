@@ -46,11 +46,11 @@ spline_degree <- 3
 #Currently choosing knot location and fitting the B-spline before fitting the stan model
 #Setting knots every 5 weeks- why? I don't know!; this yields 11 knots plus the two boundary knots
 
-B <- t(bs(X, knots=seq(min(X),max(X),5), degree=spline_degree, intercept = TRUE)) # creating the B-splines
+B <- t(bs(X, knots=seq(1,52,4), degree=spline_degree, intercept = TRUE)) # creating the B-splines
 num_data <- length(X); num_basis <- nrow(B)
-Y <- log(dat$chin+1)
+Y <- log(dat$chin+.001)
 OFFSET<-log(dat$anglers)
-
+Y<-Y.offset<- log(dat$chin+.001)/log(dat$anglers)
 
 sm<-stan_model("analyses/recmod.stan")
 
@@ -62,16 +62,19 @@ Y_hat_med <- array(NA, length(Y))
 Y_hat_ub <- array(NA, length(Y))
 Y_hat_lb <- array(NA, length(Y))
 for (i in 1:length(Y)) {
-  Y_hat_med[i] <- median(ff$Y_hat[,i]);
-  Y_hat_lb[i] <- quantile(ff$Y_hat[,i],probs = 0.25)
-  Y_hat_ub[i] <- quantile(ff$Y_hat[,i],probs = 0.75)
+  Y_hat_med[i] <- median(ff$Y_hat_log[,i]);
+  Y_hat_lb[i] <- quantile(ff$Y_hat_log[,i],probs = 0.25)
+  Y_hat_ub[i] <- quantile(ff$Y_hat_log[,i],probs = 0.75)
 }
-plot(X,Y, col="azure4", xlab="week", ylab="log(chincatch)",bty="l", main=paste(years[y]))
+plot(X,Y, col="azure4", type="p",pch=21,xlab="week", ylab="log(chincatch)",bty="l", main=paste(years[y]), ylim=c(0.4,1.2))
 polygon(c(rev(X), X), c(rev(Y_hat_lb), Y_hat_ub), col = 'grey80', border = NA)
 lines(X, Y_hat_med, col="Red", lw=2)
 }
 #Need to add to recmod.stan:
-#1. Fix offset of effort- does not seem to be working...
-#2. random effect of year
-#3. random effect of site
-#4. account for regulations
+#1. Fix offset of effort- does not seem to be working the way i added it to the model (need to get logging right)
+#2. ALso: why is spline for 1991 fitting so poorly?
+#3. random effect of year
+#First do above with a few areas that have a lot of data (7, 4, 9)- somewhere in south sound. compare phenological pattern.
+
+#4. random effect of site
+#5. account for regulations
