@@ -3,8 +3,8 @@ Questions for Ole about the phenology model for rec fishing data
 
 2) How should we ultimately choose number of knots and their location?
 
-3) My planned next steps:
-  a) add random effect of year
-  b) add random effect of site (fishing area)
+3) Some questions about my planned next steps:
+  a) add random effect of year-fit a separate spline for year year?
+  b) add random effect of site (fishing area)- little data for many areas, so.... intercept only? not sure what this means for splines exactly...
   c) add later years of catch/effort data and regulation data
   d) add presence/absence (i.e. detection) component of the model
