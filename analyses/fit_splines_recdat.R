@@ -35,60 +35,60 @@ par(mfrow=c(2,3))
 
 #fit a separate model for each year (for all sites in puget sound)
 for (y in 1:length(years)){
-dat=fishsum.yr[fishsum.yr$year==years[y],]
-X <- as.integer(dat$week) #weeks
-#num_knots <- 13 #11 interior knots and 2 boundary knots
-spline_degree <- 3
-#num_basis <- num_knots + spline_degree - 1
-
-#could add a smoothing prior (to help with overfitting): https://mc-stan.org/users/documentation/case-studies/splines_in_stan.html 
-
-#Currently choosing knot location and fitting the B-spline before fitting the stan model
-#Setting knots every 5 weeks- why? I don't know!; this yields 11 knots plus the two boundary knots
-
-B <- t(bs(X, knots=seq(1,52,4), degree=spline_degree, intercept = TRUE)) # creating the B-splines
-num_data <- length(X); 
-num_basis <- nrow(B)
-Y <- log(dat$chin+.001)
-OFFSET<-log(dat$anglers)
-Y<-Y.offset<- log(dat$chin+.001)/log(dat$anglers)
-#N<-length(X)
-#n_yr<-length(years)
-#yr<-years
-
-sm<-stan_model("analyses/recmod.stan")
-
-fit<-sampling(sm,iter=500,control = list(adapt_delta=0.95))
-
-#plot(fit)
-ff<-extract(fit)
-Y_hat_med <- array(NA, length(Y))
-Y_hat_ub <- array(NA, length(Y))
-Y_hat_lb <- array(NA, length(Y))
-for (i in 1:length(Y)) {
-  Y_hat_med[i] <- median(ff$Y_hat_log[,i]);
-  Y_hat_lb[i] <- quantile(ff$Y_hat_log[,i],probs = 0.25)
-  Y_hat_ub[i] <- quantile(ff$Y_hat_log[,i],probs = 0.75)
-}
-plot(X,Y, col="azure4", type="p",pch=21,xlab="week", ylab="log(chincatch)",bty="l", main=paste(years[y]), ylim=c(0.4,1.2))
-polygon(c(rev(X), X), c(rev(Y_hat_lb), Y_hat_ub), col = 'grey80', border = NA)
-lines(X, Y_hat_med, col="Red", lw=2)
-
-abline(v=which(Y_hat_med==max(Y_hat_med)), col="blue", lty=2, lwd=2)
-text(which(Y_hat_med==max(Y_hat_med))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med)))), col="blue", cex=1.5)
-abline(v=which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE)), col="gray", lty=2, lwd=1)
-text(which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE)))), cex=1.2)
-
-abline(v=which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE)), col="gray", lty=2, lwd=1)
-text(which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE)))), cex=1.2)
-
-abline(v=which(Y_hat_med==max(Y_hat_med[40:53], na.rm=TRUE)), col="gray", lty=2, lwd=1)
-text(which(Y_hat_med==max(Y_hat_med[20:53], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[20:53], na.rm=TRUE)))), cex=1.2)
-
-print(paste("peak abundance week:",which(Y_hat_med==max(Y_hat_med)), sep=""))
-print(paste("peak abundance week, between weeks 10-20:",which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE)), sep=""))
-print(paste("peak abundance week, between weeks 20-40:",which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE)), sep=""))
-print(paste("peak abundance week, between weeks 40-53:",which(Y_hat_med==max(Y_hat_med[40:53], na.rm=TRUE)), sep=""))
+  dat=fishsum.yr[fishsum.yr$year==years[y],]
+  X <- as.integer(dat$week) #weeks
+  #num_knots <- 13 #11 interior knots and 2 boundary knots
+  spline_degree <- 3
+  #num_basis <- num_knots + spline_degree - 1
+  
+  #could add a smoothing prior (to help with overfitting): https://mc-stan.org/users/documentation/case-studies/splines_in_stan.html 
+  
+  #Currently choosing knot location and fitting the B-spline before fitting the stan model
+  #Setting knots every 5 weeks- why? I don't know!; this yields 11 knots plus the two boundary knots
+  
+  B <- t(bs(X, knots=seq(1,52,4), degree=spline_degree, intercept = TRUE)) # creating the B-splines
+  num_data <- length(X); 
+  num_basis <- nrow(B)
+  Y <- log(dat$chin+.001)
+  OFFSET<-log(dat$anglers)
+  Y<-Y.offset<- log(dat$chin+.001)/log(dat$anglers)
+  #N<-length(X)
+  #n_yr<-length(years)
+  #yr<-years
+  
+  sm<-stan_model("analyses/recmod.stan")
+  
+  fit<-sampling(sm,iter=500,control = list(adapt_delta=0.95))
+  
+  #plot(fit)
+  ff<-extract(fit)
+  Y_hat_med <- array(NA, length(Y))
+  Y_hat_ub <- array(NA, length(Y))
+  Y_hat_lb <- array(NA, length(Y))
+  for (i in 1:length(Y)) {
+    Y_hat_med[i] <- median(ff$Y_hat_log[,i]);
+    Y_hat_lb[i] <- quantile(ff$Y_hat_log[,i],probs = 0.25)
+    Y_hat_ub[i] <- quantile(ff$Y_hat_log[,i],probs = 0.75)
+  }
+  plot(X,Y, col="azure4", type="p",pch=21,xlab="week", ylab="log(chincatch)",bty="l", main=paste(years[y]), ylim=c(0.4,1.2))
+  polygon(c(rev(X), X), c(rev(Y_hat_lb), Y_hat_ub), col = 'grey80', border = NA)
+  lines(X, Y_hat_med, col="Red", lw=2)
+  
+  abline(v=which(Y_hat_med==max(Y_hat_med)), col="blue", lty=2, lwd=2)
+  text(which(Y_hat_med==max(Y_hat_med))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med)))), col="blue", cex=1.5)
+  abline(v=which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE)), col="gray", lty=2, lwd=1)
+  text(which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE)))), cex=1.2)
+  
+  abline(v=which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE)), col="gray", lty=2, lwd=1)
+  text(which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE)))), cex=1.2)
+  
+  abline(v=which(Y_hat_med==max(Y_hat_med[40:53], na.rm=TRUE)), col="gray", lty=2, lwd=1)
+  text(which(Y_hat_med==max(Y_hat_med[20:53], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[20:53], na.rm=TRUE)))), cex=1.2)
+  
+  print(paste("peak abundance week:",which(Y_hat_med==max(Y_hat_med)), sep=""))
+  print(paste("peak abundance week, between weeks 10-20:",which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE)), sep=""))
+  print(paste("peak abundance week, between weeks 20-40:",which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE)), sep=""))
+  print(paste("peak abundance week, between weeks 40-53:",which(Y_hat_med==max(Y_hat_med[40:53], na.rm=TRUE)), sep=""))
 }
 
 #do same thing but for different areas now
@@ -151,4 +151,5 @@ for (c in 1:length(crcs)){
 #Data cleaning/imputing questions:
 #1) #There are some rows (70) for which coho were cuahgt but anglers=NA. replace with 1? or how to deal with this?
 #perhaps fill with mean anglers per coho...range of coho caught on these dates is 1-8.range of chinook is 1-3 (fewer rows- 34- of chinook with anglers=na- )
+
 
