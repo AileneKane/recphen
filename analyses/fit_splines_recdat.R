@@ -73,6 +73,22 @@ for (i in 1:length(Y)) {
 plot(X,Y, col="azure4", type="p",pch=21,xlab="week", ylab="log(chincatch)",bty="l", main=paste(years[y]), ylim=c(0.4,1.2))
 polygon(c(rev(X), X), c(rev(Y_hat_lb), Y_hat_ub), col = 'grey80', border = NA)
 lines(X, Y_hat_med, col="Red", lw=2)
+
+abline(v=which(Y_hat_med==max(Y_hat_med)), col="blue", lty=2, lwd=2)
+text(which(Y_hat_med==max(Y_hat_med))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med)))), col="blue", cex=1.5)
+abline(v=which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE)), col="gray", lty=2, lwd=1)
+text(which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE)))), cex=1.2)
+
+abline(v=which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE)), col="gray", lty=2, lwd=1)
+text(which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE)))), cex=1.2)
+
+abline(v=which(Y_hat_med==max(Y_hat_med[40:53], na.rm=TRUE)), col="gray", lty=2, lwd=1)
+text(which(Y_hat_med==max(Y_hat_med[20:53], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[20:53], na.rm=TRUE)))), cex=1.2)
+
+print(paste("peak abundance week:",which(Y_hat_med==max(Y_hat_med)), sep=""))
+print(paste("peak abundance week, between weeks 10-20:",which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE)), sep=""))
+print(paste("peak abundance week, between weeks 20-40:",which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE)), sep=""))
+print(paste("peak abundance week, between weeks 40-53:",which(Y_hat_med==max(Y_hat_med[40:53], na.rm=TRUE)), sep=""))
 }
 
 #do same thing but for different areas now
@@ -125,7 +141,7 @@ for (c in 1:length(crcs)){
 
 #Need to add to recmod.stan:
 #1. Fix offset of effort- does not seem to be working the way i added it to the model (need to get logging right)
-#2. ALso: why is spline for 1991 fitting so poorly?
+#2. Also: why is spline for 1991 fitting so poorly?
 #3. random effect of year
 #First do above with a few areas that have a lot of data (7, 4, 9)- somewhere in south sound. compare phenological pattern.
 
