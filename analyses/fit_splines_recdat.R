@@ -91,53 +91,59 @@ for (y in 1:length(years)){
   print(paste("peak abundance week, between weeks 40-53:",which(Y_hat_med==max(Y_hat_med[40:53], na.rm=TRUE)), sep=""))
 }
 
-#do same thing but for different areas now
-quartz(height=8, width=20)
-par(mfrow=c(2,3))
-crcs<-unique(d$CRCArea)
+#do same thing but for a few areas that have lots of catch
+
+#crcs<-unique(d$CRCArea)
 table(d$CRCArea,d$year)#5, 6, 7 9 10,11,12,13 have good numbers
-crcs<-c(5,6,7,9,10,13)
-#fit a separate model for each year (for all sites in puget sound)
+#fit a separate model for each year, for sites with a lot of data (for all sites in puget sound)
+crcs<-c(7,9)#
 for (c in 1:length(crcs)){
-  dat=fishsum.area[fishsum.area$area==crcs[c],]
-  X <- as.integer(dat$week) #weeks
-  #num_knots <- 13 #11 interior knots and 2 boundary knots
-  spline_degree <- 3
-  #num_basis <- num_knots + spline_degree - 1
+  dat=fishsum[fishsum$area==crcs[c],]
+  years<-unique(dat$year)
+  quartz(height=8, width=20)
+  par(mfrow=c(2,3))
+  for (y in 1:length(years)){
+    datyr=fishsum[fishsum$year==years[y],]
+    X <- as.integer(datyr$week) #weeks
+    #num_knots <- 13 #11 interior knots and 2 boundary knots
+    spline_degree <- 3
+    #num_basis <- num_knots + spline_degree - 1
   
-  #could add a smoothing prior (to help with overfitting): https://mc-stan.org/users/documentation/case-studies/splines_in_stan.html 
+    #could add a smoothing prior (to help with overfitting): https://mc-stan.org/users/documentation/case-studies/splines_in_stan.html 
   
-  #Currently choosing knot location and fitting the B-spline before fitting the stan model
-  #Setting knots every 5 weeks- why? I don't know!; this yields 11 knots plus the two boundary knots
+    #Currently choosing knot location and fitting the B-spline before fitting the stan model
+    #Setting knots every 4 weeks- why? I don't know!; this yields 11 knots plus the two boundary knots
   
-  B <- t(bs(X, knots=seq(1,52,4), degree=spline_degree, intercept = TRUE)) # creating the B-splines
-  num_data <- length(X); 
-  num_basis <- nrow(B)
-  Y <- log(dat$chin+.001)
-  OFFSET<-log(dat$anglers+.001)
-  Y<-Y.offset<- log(dat$chin+.001)/log(dat$anglers+.001)
-  #N<-length(X)
-  #n_yr<-length(crcs)
-  #yr<-crcs
+    B <- t(bs(X, knots=seq(1,52,4), degree=spline_degree, intercept = TRUE)) # creating the B-splines
+    num_data <- length(X); 
+    num_basis <- nrow(B)
+    Y <- log(datyr$chin+.001)
+    OFFSET<-log(datyr$anglers+.001)
+    Y<-Y.offset<- log(datyr$chin+.001)/log(datyr$anglers+.001)
+    #N<-length(X)
+    #n_yr<-length(crcs)
+    #yr<-crcs
   
-  sm<-stan_model("analyses/recmod.stan")
+    sm<-stan_model("analyses/recmod.stan")
   
-  fit<-sampling(sm,iter=500,control = list(adapt_delta=0.99, max_treedepth=15))
+    fit<-sampling(sm,iter=500,control = list(adapt_delta=0.99, max_treedepth=15))
   
-  #plot(fit)
-  ff<-extract(fit)
-  Y_hat_med <- array(NA, length(Y))
-  Y_hat_ub <- array(NA, length(Y))
-  Y_hat_lb <- array(NA, length(Y))
-  for (i in 1:length(Y)) {
+    #plot(fit)
+    ff<-extract(fit)
+    Y_hat_med <- array(NA, length(Y))
+    Y_hat_ub <- array(NA, length(Y))
+    Y_hat_lb <- array(NA, length(Y))
+    for (i in 1:length(Y)) {
     Y_hat_med[i] <- median(ff$Y_hat_log[,i]);
     Y_hat_lb[i] <- quantile(ff$Y_hat_log[,i],probs = 0.25)
     Y_hat_ub[i] <- quantile(ff$Y_hat_log[,i],probs = 0.75)
-  }
-  plot(X,Y, col="azure4", type="p",pch=21,xlab="week", ylab="log(chincatch)",bty="l", main=paste(crcs[c]))
+    }
+  plot(X,Y, col="azure4", type="p",pch=21,xlab="week", ylab="log(chincatch)",bty="l", main=paste(crcs[c],years[y],sep="."))
   polygon(c(rev(X), X), c(rev(Y_hat_lb), Y_hat_ub), col = 'grey80', border = NA)
   lines(X, Y_hat_med, col="Red", lw=2)
+  }
 }
+#Fit separate models over time for 3 areas: 7, 4 and 9
 
 #Need to add to recmod.stan:
 #1. Fix offset of effort- does not seem to be working the way i added it to the model (need to get logging right)

@@ -18,7 +18,7 @@ options(mc.cores = parallel::detectCores())
 ## First steps to cleaning: Get the data, subset down to exact data columns that we want 
 ## Be sure to keep an eye on this part of the code and the files it sources, they will need updating!
 
-## (1) slim down the data to correct response and no NAs ...
+## (1) the below file sums up catches by week, area, year,slim down the data to correct response and no NAs ...
 
 source("analyses/wcrcdataplease.R")
 dim(fishsum)
