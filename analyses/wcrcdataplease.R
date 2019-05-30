@@ -34,3 +34,17 @@ fishsum.yr$year<-substr(fishsum.yr$date,1,4)
 fishsum.yr$week<-substr(fishsum.yr$date,5,6)
 dim(fishsum.yr)
 #fishsum<- fishsum [apply(fishsum , 1, function(x) all(!is.na(x))),] # only keep rows of all not na
+
+#now sum by area instead of year
+# separate fish by species to put the fish caught 
+anglers.area = aggregate(d$Anglers, list(paste(d$CRCArea,d$week, sep="")),sum, na.rm=TRUE)
+chinook.area = aggregate(d$ChinCaught, list(paste(d$CRCArea,d$week, sep="")),sum, na.rm=TRUE)
+coho.area= aggregate(d$CohoCaught, list(paste(d$CRCArea,d$week, sep="")),sum, na.rm=TRUE)
+#add other species from d$OtherSpCaught
+fishsum.area<-cbind(anglers.area,chinook.area$x,coho.area$x)
+colnames(fishsum.area)<-c("areawk","anglers","chin","coho")
+fishsum.area$week<-substr(fishsum.area$areawk,nchar(fishsum.area$areawk)-1,nchar(fishsum.area$areawk))
+fishsum.area$area<-substr(fishsum.area$areawk,1,nchar(fishsum.area$areawk)-2)
+
+head(fishsum.area)
+#fishsum<- fishsum [apply(fishsum , 1, function(x) all(!is.na(x))),] # only keep rows of all not na

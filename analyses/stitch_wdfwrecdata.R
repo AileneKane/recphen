@@ -69,6 +69,7 @@ points(as.integer(yr$doy),yr$OtherSpCaught, pch=21,bg="lightblue")
 }
 }
 d1<-d1[order(d1$year,d1$doy,d1$CRCArea),]
+
 write.csv(d1,"analyses/output/wacrdat_1984_1993.csv", row.names = FALSE)
 #reorder dataset so that columns are in same order as other years
 #d1a<-subset(d1,select=c())#put columns in same order as other datasets

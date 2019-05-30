@@ -7,6 +7,9 @@ data {
   vector[num_data] X; //week
   //vector[num_data] OFFSET ; //effort= number of anglers
   matrix[num_basis, num_data] B; 
+  //int<lower=1> N;
+	//int<lower=1> n_yr;
+	//int<lower=1, upper=n_r> yr[N];
 } 
  
 parameters { 
