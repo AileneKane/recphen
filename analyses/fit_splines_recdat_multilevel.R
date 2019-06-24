@@ -33,45 +33,61 @@ years<-unique(fishsum.yr$year)
 quartz(height=8, width=20)
 par(mfrow=c(2,3))
 
-#fit a separate model for each year (for all sites in puget sound)
-for (y in 1:length(years)){
-  dat=fishsum.yr[fishsum.yr$year==years[y],]
+#fit a model that accounts for area
+#table(fishsum$year,fishsum$region)
+dat=fishsum
+  yr<-as.integer(as.factor(dat$year))
+  n_yr<-length(unique(yr))
+    #for (a in 1:length(regions)){
   X <- as.integer(dat$week) #weeks
-  #num_knots <- 13 #11 interior knots and 2 boundary knots
   spline_degree <- 3
-  #num_basis <- num_knots + spline_degree - 1
-  
   #could add a smoothing prior (to help with overfitting): https://mc-stan.org/users/documentation/case-studies/splines_in_stan.html 
-  
+
   #Currently choosing knot location and fitting the B-spline before fitting the stan model
   #Setting knots every 6 weeks- why? I don't know!; this yields 11 knots plus the two boundary knots
-  
-  B <- t(bs(X, knots=seq(1,52,4), degree=spline_degree, intercept = TRUE)) # creating the B-splines
+  B <- t(bs(X, knots=seq(1,52,6), degree=spline_degree, intercept = TRUE)) # creating the B-splines
   N <- length(X); 
   num_basis <- nrow(B)
+   
   Y <- log(dat$chin+.001)
   OFFSET<-log(dat$anglers)
   Y<-Y.offset<- log(dat$chin+.001)/log(dat$anglers+.001)
+  reg<-as.integer(dat$region)
+  smml<-stan_model("analyses/recmodml.stan")
   
-  sm<-stan_model("analyses/recmod.stan")
+  fitml<-sampling(smml,iter=500,control = list(adapt_delta=0.95))
   
-  fit<-sampling(sm,iter=500,control = list(adapt_delta=0.95))
-  ff<-extract(fit)
-  ff.sum<-summary(fit)$summary
-  ff.sum[grep("a0",rownames(ff.sum)),1]#0.6458231
-  range(ff.sum[grep("a_raw",rownames(ff.sum)),1])#-1.236066  1.201761
-  ff.sum[grep("sigma",rownames(ff.sum)),1]#sigma:0.05880219
   #plot(fit)
-  ff<-extract(fit)
+  ffml<-extract(fitml)
+  ffml.sum<-summary(fitml)$summary
+  ffml.sum[grep("a0",rownames(ffml.sum)),]#0.123,0.016,0.019,-0.23,0.054,0.122
+  ffml.sum[grep("mu",rownames(ffml.sum)),]#0.0179
+  #much lower than a0 in the non-multilevel model- is this ok?
+  #ff.sum[grep("a0",rownames(ff.sum)),1]#0.6458231
+  ffml.sum[grep("sigma",rownames(ffml.sum)),]#sigma:758; sigma_a_yr: 1.514
+  #why is sigma so much bigger than in the nonml model?
+  #ff.sum[grep("sigma",rownames(ff.sum)),1]#sigma:0.05880219
+  
+  range(ffml.sum[grep("a_raw",rownames(ffml.sum)),1])#-1.70304100  0.01866892
+  #range(ff.sum[grep("a_raw",rownames(ff.sum)),1])#-1.236066  1.201761
+  #Questions
+  #Why are 8 identical Y_hat_logs?
+  #compare the ranges of the ypreds in multilevel and nonmultilevel model:
+  
+ range(ffml$Y_hat_log)#-596.0600  283.7359
+ #nonmultilevel- much lower....hmmm...what is going on here
+ range(ff$Y_hat_log)#0.4616113 0.8527236; 
+ 
+  #The below code needs to be corrected to show year-specific curves
   Y_hat_med <- array(NA, length(Y))
   Y_hat_ub <- array(NA, length(Y))
   Y_hat_lb <- array(NA, length(Y))
   for (i in 1:length(Y)) {
-    Y_hat_med[i] <- median(ff$Y_hat_log[,i])
-    Y_hat_lb[i] <- quantile(ff$Y_hat_log[,i],probs = 0.25)
-    Y_hat_ub[i] <- quantile(ff$Y_hat_log[,i],probs = 0.75)
+    Y_hat_med[i] <- median(ffml$Y_hat_log[,i])
+    Y_hat_lb[i] <- quantile(ffml$Y_hat_log[,i],probs = 0.25)
+    Y_hat_ub[i] <- quantile(ffml$Y_hat_log[,i],probs = 0.75)
   }
-  plot(X,Y, col="azure4", type="p",pch=21,xlab="week", ylab="log(chincatch)",bty="l", main=paste(years[y]), ylim=c(0.4,1.2))
+  plot(X,Y, col=yr, type="p",pch=21,xlab="week", ylab="log(chincatch)",bty="l", ylim=c(0.4,1.2))
   polygon(c(rev(X), X), c(rev(Y_hat_lb), Y_hat_ub), col = 'grey80', border = NA)
   lines(X, Y_hat_med, col="Red", lw=2)
   
@@ -80,19 +96,18 @@ for (y in 1:length(years)){
   abline(v=which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE)), col="gray", lty=2, lwd=1)
   text(which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE)))), cex=1.2)
   
-  abline(v=which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE)), col="gray", lty=2, lwd=1)
-  text(which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE)))), cex=1.2)
+  abline(v=which(Y_hat_med==max(Y_hat_med[21:40], na.rm=TRUE)), col="gray", lty=2, lwd=1)
+  text(which(Y_hat_med==max(Y_hat_med[21:40], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE)))), cex=1.2)
   
-  abline(v=which(Y_hat_med==max(Y_hat_med[40:53], na.rm=TRUE)), col="gray", lty=2, lwd=1)
-  text(which(Y_hat_med==max(Y_hat_med[20:53], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[20:53], na.rm=TRUE)))), cex=1.2)
+  abline(v=which(Y_hat_med==max(Y_hat_med[41:53], na.rm=TRUE)), col="gray", lty=2, lwd=1)
+  text(which(Y_hat_med==max(Y_hat_med[41:53], na.rm=TRUE))+1,1,labels=as.character(paste(which(Y_hat_med==max(Y_hat_med[20:53], na.rm=TRUE)))), cex=1.2)
   
   print(paste("peak abundance week:",which(Y_hat_med==max(Y_hat_med)), sep=""))
   print(paste("peak abundance week, between weeks 10-20:",which(Y_hat_med==max(Y_hat_med[10:20], na.rm=TRUE)), sep=""))
-  print(paste("peak abundance week, between weeks 20-40:",which(Y_hat_med==max(Y_hat_med[20:40], na.rm=TRUE)), sep=""))
-  print(paste("peak abundance week, between weeks 40-53:",which(Y_hat_med==max(Y_hat_med[40:53], na.rm=TRUE)), sep=""))
+  print(paste("peak abundance week, between weeks 21-40:",which(Y_hat_med==max(Y_hat_med[21:40], na.rm=TRUE)), sep=""))
+  print(paste("peak abundance week, between weeks 41-53:",which(Y_hat_med==max(Y_hat_med[41:53], na.rm=TRUE)), sep=""))
 }
 
-#do same thing but for a few areas that have lots of catch
 
 #crcs<-unique(d$CRCArea)
 #table(d$CRCArea,d$year)#5, 6, 7 9 10,11,12,13 have good numbers

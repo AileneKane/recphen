@@ -1,8 +1,7 @@
 ## Started April 2019 ##
 ## by Ailene ##
-###cleaning- this should be moved to a cleaning file- ask Ole what to do about this
-d$Anglers[which(is.na(d$Anglers) & d$ChinCaught>=1)]<-1#fixes 34
-d$Anglers[which(is.na(d$Anglers) & d$CohoCaught>=1)]<-1#fixes 70
+###cleaning- remove rows that do not have angler data
+d<-d[-which(is.na(d$Anglers)),]#for now...is there a better way to deal with this?
 
 ## Source file for reading in the data and
 ## formatting datafile for stan
@@ -56,5 +55,11 @@ colnames(fishsum.area)<-c("areawk","anglers","chin","coho")
 fishsum.area$week<-substr(fishsum.area$areawk,nchar(fishsum.area$areawk)-1,nchar(fishsum.area$areawk))
 fishsum.area$area<-substr(fishsum.area$areawk,1,nchar(fishsum.area$areawk)-2)
 
-head(fishsum)
+#head(fishsum)
 #fishsum<- fishsum [apply(fishsum , 1, function(x) all(!is.na(x))),] # only keep rows of all not na
+#add region to fishsum- this lumps togethe r areas into 3 regions: north, south, and west
+#assign to ps (puget sound) or uss (upper salish sea) using fishing area
+fishsum$region<-3#ps
+fishsum$region[fishsum$area=="7"|fishsum$area=="6"|fishsum$area=="4"|fishsum$area=="5"]<-"2"
+fishsum$region[fishsum$area=="1"|fishsum$area=="2"|fishsum$area=="3"]<-"1"#outer coast
+unique(fishsum$region)
