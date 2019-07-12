@@ -35,13 +35,15 @@ dat=fishsum
   yr<-as.integer(as.factor(dat$year))
   n_yr<-length(unique(yr))
     #for (a in 1:length(regions)){
+  n_weeks<-length(unique(dat$week))
+  w<-as.integer(unique(dat$week))
   X <- as.integer(dat$week) #weeks
   spline_degree <- 3
   #could add a smoothing prior (to help with overfitting): https://mc-stan.org/users/documentation/case-studies/splines_in_stan.html 
 
   #Currently choosing knot location and fitting the B-spline before fitting the stan model
   #Setting knots every 6 weeks- why? I don't know!; this yields 11 knots plus the two boundary knots
-  B <- t(bs(X, knots=seq(1,52,6), degree=spline_degree, intercept = TRUE)) # creating the B-splines
+  B <- t(bs(w, knots=seq(1,52,6), degree=spline_degree, intercept = TRUE)) # creating the B-splines
   N <- length(X); 
   num_basis <- nrow(B)
    
@@ -49,11 +51,12 @@ dat=fishsum
   OFFSET<-log(dat$anglers)
   Y<-Y.offset<- log(dat$chin+.001)/log(dat$anglers+.001)
   reg<-as.integer(dat$region)
-  smml<-stan_model("analyses/recmodml.stan")
+  smml<-stan_model("analyses/recmodml_AOS.stan")
   
-  fitml<-sampling(smml,iter=500,control = list(adapt_delta=0.95))
-  
-  #plot(fit)
+  fitml<-sampling(smml,iter=1000,control = list(adapt_delta=0.99,max_treedepth=15))
+  quartz()
+  pairs(fitml)
+  #plot(fitml)
   ffml<-extract(fitml)
   ffml.sum<-summary(fitml)$summary
   ffml.sum[grep("a0",rownames(ffml.sum)),]#0.123,0.016,0.019,-0.23,0.054,0.122

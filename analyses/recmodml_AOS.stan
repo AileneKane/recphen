@@ -3,11 +3,11 @@
 data { 
   int<lower=1> N;
   int num_basis;
-  int N_weeks ; /// THIS IS NEW
+  int n_weeks ; /// THIS IS NEW
   vector[N] Y; //log(number of fish caught)
   vector[N] X; //week
   //vector[num_data] OFFSET ; //effort= number of anglers
-  matrix[num_basis, N_weeks] B;  /// THIS IS DIFFERENT
+  matrix[num_basis, n_weeks] B;  ///
 	//int<lower=1> n_reg
 	//int<lower=1, upper=n_reg> reg[N];
 	int<lower=1> n_yr;
@@ -25,20 +25,19 @@ parameters {
  
 transformed parameters { 
   row_vector[num_basis] a; 
-  vector[N_week] Y_hat_log[N_yr]; /// THIS IS NEW
+  vector[n_weeks] Y_hat_log[n_yr]; /// THIS IS NEW
   a = a_raw*tau;  
   
   /// ADD A LOOP HERE
   // version 1
-  for( i in 1:N_yr)
-  Y_hat_log[i] = a0[i] + to_vector(a*B) + to_vector(WIGGLES[i]*B) ; /// THIS IS NEW
+  for( i in 1:n_yr){
+  Y_hat_log[i] = a0[i] + to_vector(a*B); /// + to_vector(WIGGLES[i]*B//
   }
   
   // .* means element by element multiplication.
   //version 2 - should be the same answer as v1
-  Y_hat_log = a0 + to_vector(a*B) ; /// THIS IS NEW
+//  Y_hat_log = a0 + to_vector(a*B) ; /// THIS IS NEW
 } 
- 
  
 model { 
   mu_a_yr ~ normal(0, 1);
