@@ -27,13 +27,10 @@ transformed parameters {
   row_vector[num_basis] a; 
   vector[n_weeks] Y_hat_log[n_yr]; /// THIS IS NEW
   a = a_raw*tau;  
-  
-  /// ADD A LOOP HERE
   // version 1
   for( i in 1:n_yr){
-  Y_hat_log[i] = a0[i] + to_vector(a*B); /// + to_vector(WIGGLES[i]*B//
+  Y_hat_log[i] = a0[i] + to_vector(a*B); /// + to_vector(WIGGLES[i]*B//add this...
   }
-  
   // .* means element by element multiplication.
   //version 2 - should be the same answer as v1
 //  Y_hat_log = a0 + to_vector(a*B) ; /// THIS IS NEW
@@ -49,8 +46,7 @@ model {
   for(i in  1:n_yr){ /// THIS IS NEW 
     Y[i] ~ normal(Y_hat_log[i], sigma); 
     
-    Y[i] ~ normal(a0[i] + to_vector(a*B),sigma);
-    
+    //Y[i] ~ normal(a0[i] + to_vector(a*B),sigma);//ask ole when you would want this here...
   }
 } 
 
